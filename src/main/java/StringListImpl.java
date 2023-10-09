@@ -1,7 +1,7 @@
 import java.util.Arrays;
 
-class IntegerListImpl implements IntegerList {
-    private final Integer[] storage;
+abstract class IntegerListImpl implements IntegerList {
+    private Integer[] storage;
     private int size;
 
     public IntegerListImpl() {
@@ -14,7 +14,7 @@ class IntegerListImpl implements IntegerList {
 
     @Override
     public Integer add(Integer item) {
-        validateSize();
+        growIfNeeded();
         validateItem(item);
         storage[size++] = item;
         return item;
@@ -22,7 +22,7 @@ class IntegerListImpl implements IntegerList {
 
     @Override
     public Integer add(int index, Integer item) {
-        validateSize();
+        growIfNeeded();
         validateItem(item);
         validateIndex(index);
 
@@ -67,13 +67,6 @@ class IntegerListImpl implements IntegerList {
         }
         size--;
         return item;
-    }
-
-    @Override
-    public boolean contains(Integer item) {
-        Integer[] storageCopy = toArray();
-        sort(storageCopy);
-        return binarySearch(storageCopy, item );
     }
 
     @Override
@@ -123,6 +116,11 @@ class IntegerListImpl implements IntegerList {
 
     }
 
+    private void growIfNeeded() {
+        if (size == storage.length) {
+            grow();
+        }
+    }
     @Override
     public Integer[] toArray() {
         return Arrays.copyOf(storage, size);
@@ -147,35 +145,42 @@ class IntegerListImpl implements IntegerList {
     }
 
     private void sort(Integer[] arr) {
-            for (int i = 1; i < arr.length; i++) {
-                int temp = arr[i];
-                int j = i;
-                while (j > 0 && arr[j - 1] >= temp) {
-                    arr[j] = arr[j - 1];
-                    j--;
-                }
-                arr[j] = temp;
+            quickSort(arr, 0 , arr.length - 1);
+        }
+
+
+
+    private void quickSort(Integer[] arr, int begin, int end) {
+        if (begin < end) {
+            int partitionIndex = partition(arr, begin, end);
+
+            quickSort(arr, begin, partitionIndex - 1);
+            quickSort(arr, partitionIndex + 1, end);
+        }
+    }
+    private int partition(Integer[] arr, int begin, int end) {
+        int pivot = arr[end];
+        int i = (begin - 1);
+
+        for (int j = begin; j < end; j++) {
+            if (arr[j] <= pivot) {
+                i++;
+
+                swapElements(arr, i, j);
             }
         }
 
-    private boolean binarySearch(Integer[] arr, Integer item) {
-        int min = 0;
-        int max = arr.length - 1;
+        swapElements(arr, i + 1, end);
+        return i + 1;
+    }
+    private void swapElements(Integer[] arr, int i1, int i2) {
+        int temp = arr[i1];
+        arr[i1] = arr[i2];
+        arr[i2] = temp;
+    }
 
-        while (min <= max) {
-            int mid = (min + max) / 2;
-
-            if (item == arr[mid]) {
-                return true;
-            }
-
-            if (item < arr[mid]) {
-                max = mid - 1;
-            } else {
-                min = mid + 1;
-            }
-        }
-        return false;
+    private void grow() {
+        storage = Arrays.copyOf(storage, size + size / 2);
     }
 }
 
